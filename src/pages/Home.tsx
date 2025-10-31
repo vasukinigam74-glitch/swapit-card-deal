@@ -38,15 +38,17 @@ const Home = () => {
 
   const fetchItems = async () => {
     try {
-      const { data, error } = await supabase
-        .from('items')
-        .select('*')
-        .eq('status', 'active')
-        .neq('user_id', user?.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/items`, {
+        headers: {
+          'Authorization': `Bearer ${session?.access_token}`,
+        },
+      });
 
-      if (error) throw error;
+      if (!response.ok) throw new Error('Failed to fetch items');
+      
+      const data = await response.json();
       setItems(data || []);
     } catch (error) {
       console.error('Error fetching items:', error);
