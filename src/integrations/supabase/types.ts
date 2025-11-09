@@ -16,18 +16,21 @@ export type Database = {
     Tables: {
       interests: {
         Row: {
+          carbon_saved_kg: number | null
           created_at: string | null
           id: string
           item_id: string
           user_id: string
         }
         Insert: {
+          carbon_saved_kg?: number | null
           created_at?: string | null
           id?: string
           item_id: string
           user_id: string
         }
         Update: {
+          carbon_saved_kg?: number | null
           created_at?: string | null
           id?: string
           item_id?: string
@@ -188,7 +191,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      calculate_carbon_savings: {
+        Args: { item_category: string }
+        Returns: number
+      }
     }
     Enums: {
       [_ in never]: never

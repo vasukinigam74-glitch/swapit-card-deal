@@ -10,6 +10,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { toast } from 'sonner';
 import { Loader2, Upload } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import CarbonTracker from '@/components/CarbonTracker';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -121,6 +122,10 @@ export default function Profile() {
       <Navigation />
       <main className="container max-w-2xl mx-auto px-4 py-8 pb-24">
         <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
+
+        <div className="mb-6">
+          <CarbonTracker />
+        </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div className="flex flex-col items-center gap-4 mb-8">
