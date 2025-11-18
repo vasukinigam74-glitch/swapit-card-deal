@@ -4,8 +4,9 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import SwipeCard from '@/components/SwipeCard';
 import Navigation from '@/components/Navigation';
-import { X, Heart, RotateCcw } from 'lucide-react';
+import { X, Heart, RotateCcw, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 
 interface Item {
@@ -26,8 +27,34 @@ const Home = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [hasInterests, setHasInterests] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) {
+      navigate('/auth');
+      return;
+    }
+    checkInterests();
+    fetchItems();
+  }, [user, navigate]);
+
+  const checkInterests = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('interests')
+        .select('id')
+        .eq('user_id', user?.id)
+        .limit(1);
+      
+      if (!error && data && data.length > 0) {
+        setHasInterests(true);
+      }
+    } catch (error) {
+      console.error('Error checking interests:', error);
+    }
+  };
 
   useEffect(() => {
     if (!user) {
@@ -93,6 +120,12 @@ const Home = () => {
     <div className="min-h-screen bg-background pb-24 md:pb-4 pt-20 md:pt-24">
       <Navigation />
       <div className="container max-w-md mx-auto px-4">
+        {hasInterests && (
+          <Badge variant="secondary" className="mb-4 mx-auto flex items-center gap-1 w-fit">
+            <Sparkles className="w-3 h-3" />
+            Personalized for you
+          </Badge>
+        )}
         <div className="relative h-[600px] mb-8">
           {!hasMoreCards ? (
             <div className="absolute inset-0 flex items-center justify-center bg-card rounded-3xl border-2 border-dashed border-border">
