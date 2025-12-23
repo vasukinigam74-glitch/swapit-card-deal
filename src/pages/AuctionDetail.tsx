@@ -23,6 +23,7 @@ interface AuctionItem {
   auction_end_date: string;
   city: string;
   price: number;
+  estimated_value: number | null;
   user_id: string;
   profiles: {
     full_name: string;
@@ -45,6 +46,7 @@ interface Offer {
     title: string;
     photo_url: string;
     price: number;
+    estimated_value: number | null;
   };
 }
 
@@ -53,6 +55,7 @@ interface UserItem {
   title: string;
   photo_url: string | null;
   price: number;
+  estimated_value: number | null;
 }
 
 const AuctionDetail = () => {
@@ -105,11 +108,11 @@ const AuctionDetail = () => {
         (offersData || []).map(async (offer) => {
           const { data: itemData } = await supabase
             .from('items')
-            .select('title, photo_url, price')
+            .select('title, photo_url, price, estimated_value')
             .eq('id', offer.offered_item_id)
             .single();
           
-          return { ...offer, items: itemData || { title: '', photo_url: '', price: 0 } };
+          return { ...offer, items: itemData || { title: '', photo_url: '', price: 0, estimated_value: null } };
         })
       );
 
@@ -128,7 +131,7 @@ const AuctionDetail = () => {
     
     const { data, error } = await supabase
       .from('items')
-      .select('id, title, photo_url, price')
+      .select('id, title, photo_url, price, estimated_value')
       .eq('user_id', user.id)
       .eq('status', 'active')
       .eq('is_auction', false);
@@ -285,18 +288,34 @@ const AuctionDetail = () => {
                       <div className="space-y-4 py-4">
                         <div className="space-y-2">
                           <Label>Select Item to Offer</Label>
-                          <Select value={selectedItemId} onValueChange={setSelectedItemId}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Choose from your items" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {userItems.map((item) => (
-                                <SelectItem key={item.id} value={item.id}>
-                                  {item.title} (₹{item.price})
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          {userItems.length === 0 ? (
+                            <div className="p-4 text-center border rounded-lg bg-muted/50">
+                              <p className="text-sm text-muted-foreground mb-2">
+                                You don't have any items to offer
+                              </p>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => navigate('/create')}
+                              >
+                                Create a Listing First
+                              </Button>
+                            </div>
+                          ) : (
+                            <Select value={selectedItemId} onValueChange={setSelectedItemId}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Choose from your items" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {userItems.map((item) => (
+                                  <SelectItem key={item.id} value={item.id}>
+                                    {item.title} (₹{item.estimated_value || item.price})
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <Label>Message (Optional)</Label>
@@ -353,8 +372,10 @@ const AuctionDetail = () => {
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
-                                <h4 className="font-semibold">{offer.items.title}</h4>
-                                <p className="text-sm text-muted-foreground">₹{offer.items.price}</p>
+                              <h4 className="font-semibold">{offer.items.title}</h4>
+                                <p className="text-sm text-muted-foreground">
+                                  Est. ₹{offer.items.estimated_value || offer.items.price}
+                                </p>
                               </div>
                               <Badge variant={
                                 offer.status === 'accepted' ? 'default' :

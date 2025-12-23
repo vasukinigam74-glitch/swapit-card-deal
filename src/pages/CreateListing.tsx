@@ -18,6 +18,7 @@ const CreateListing = () => {
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('0');
+  const [estimatedValue, setEstimatedValue] = useState('');
   const [isDonation, setIsDonation] = useState(true);
   const [city, setCity] = useState('');
   const [pincode, setPincode] = useState('');
@@ -80,6 +81,7 @@ const CreateListing = () => {
         category,
         description,
         price: isDonation ? 0 : parseFloat(price),
+        estimated_value: estimatedValue ? parseFloat(estimatedValue) : null,
         is_donation: isDonation,
         photo_url: photoUrl,
         city,
@@ -227,18 +229,34 @@ const CreateListing = () => {
 
               {!isDonation && (
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price (₹)</Label>
+                  <Label htmlFor="price">Base Price (₹)</Label>
                   <Input
                     id="price"
                     type="number"
                     min="0"
-                    step="0.01"
-                    placeholder="0.00"
+                    step="1"
+                    placeholder="0"
                     value={price}
                     onChange={(e) => setPrice(e.target.value)}
                   />
                 </div>
               )}
+
+              <div className="space-y-2">
+                <Label htmlFor="estimatedValue">Estimated Value (₹)</Label>
+                <Input
+                  id="estimatedValue"
+                  type="number"
+                  min="0"
+                  step="1"
+                  placeholder="Enter estimated market value"
+                  value={estimatedValue}
+                  onChange={(e) => setEstimatedValue(e.target.value)}
+                />
+                <p className="text-xs text-muted-foreground">
+                  This helps others understand the value of your item for fair swaps
+                </p>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
