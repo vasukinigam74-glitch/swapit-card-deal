@@ -165,6 +165,7 @@ export type Database = {
       offers: {
         Row: {
           auction_listing_id: string
+          cash_amount: number | null
           created_at: string | null
           id: string
           message: string | null
@@ -174,6 +175,7 @@ export type Database = {
         }
         Insert: {
           auction_listing_id: string
+          cash_amount?: number | null
           created_at?: string | null
           id?: string
           message?: string | null
@@ -183,6 +185,7 @@ export type Database = {
         }
         Update: {
           auction_listing_id?: string
+          cash_amount?: number | null
           created_at?: string | null
           id?: string
           message?: string | null

@@ -11,7 +11,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Clock, MapPin, Package, User } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Clock, MapPin, Package, User, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface AuctionItem {
@@ -37,7 +39,8 @@ interface Offer {
   created_at: string;
   status: string;
   offerer_user_id: string;
-  offered_item_id: string;
+  offered_item_id: string | null;
+  cash_amount: number;
   profiles: {
     full_name: string;
     avatar_url: string;
@@ -47,7 +50,7 @@ interface Offer {
     photo_url: string;
     price: number;
     estimated_value: number | null;
-  };
+  } | null;
 }
 
 interface UserItem {
@@ -64,6 +67,8 @@ const AuctionDetail = () => {
   const [offers, setOffers] = useState<Offer[]>([]);
   const [userItems, setUserItems] = useState<UserItem[]>([]);
   const [selectedItemId, setSelectedItemId] = useState('');
+  const [cashAmount, setCashAmount] = useState<string>('');
+  const [offerType, setOfferType] = useState<'item' | 'cash' | 'both'>('item');
   const [offerMessage, setOfferMessage] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -106,13 +111,16 @@ const AuctionDetail = () => {
       // Fetch offered item details separately to avoid ambiguity
       const offersWithItems = await Promise.all(
         (offersData || []).map(async (offer) => {
-          const { data: itemData } = await supabase
-            .from('items')
-            .select('title, photo_url, price, estimated_value')
-            .eq('id', offer.offered_item_id)
-            .single();
-          
-          return { ...offer, items: itemData || { title: '', photo_url: '', price: 0, estimated_value: null } };
+          if (offer.offered_item_id) {
+            const { data: itemData } = await supabase
+              .from('items')
+              .select('title, photo_url, price, estimated_value')
+              .eq('id', offer.offered_item_id)
+              .single();
+            
+            return { ...offer, items: itemData || null };
+          }
+          return { ...offer, items: null };
         })
       );
 
@@ -142,14 +150,29 @@ const AuctionDetail = () => {
   };
 
   const handlePlaceOffer = async () => {
-    if (!selectedItemId || !user || !auction) return;
+    if (!user || !auction) return;
+    
+    // Validate based on offer type
+    if (offerType === 'item' && !selectedItemId) {
+      toast.error('Please select an item to offer');
+      return;
+    }
+    if (offerType === 'cash' && (!cashAmount || parseFloat(cashAmount) <= 0)) {
+      toast.error('Please enter a valid cash amount');
+      return;
+    }
+    if (offerType === 'both' && (!selectedItemId || !cashAmount || parseFloat(cashAmount) <= 0)) {
+      toast.error('Please select an item and enter a cash amount');
+      return;
+    }
     
     setSubmitting(true);
     try {
       const { error } = await supabase.from('offers').insert({
         auction_listing_id: auction.id,
         offerer_user_id: user.id,
-        offered_item_id: selectedItemId,
+        offered_item_id: offerType !== 'cash' ? selectedItemId : null,
+        cash_amount: offerType !== 'item' ? parseFloat(cashAmount) : 0,
         message: offerMessage,
         status: 'pending',
       });
@@ -159,6 +182,8 @@ const AuctionDetail = () => {
       toast.success('Offer placed successfully!');
       setDialogOpen(false);
       setSelectedItemId('');
+      setCashAmount('');
+      setOfferType('item');
       setOfferMessage('');
       fetchAuctionDetails();
     } catch (error: any) {
@@ -286,37 +311,75 @@ const AuctionDetail = () => {
                         <DialogTitle>Place Your Offer</DialogTitle>
                       </DialogHeader>
                       <div className="space-y-4 py-4">
-                        <div className="space-y-2">
-                          <Label>Select Item to Offer</Label>
-                          {userItems.length === 0 ? (
-                            <div className="p-4 text-center border rounded-lg bg-muted/50">
-                              <p className="text-sm text-muted-foreground mb-2">
-                                You don't have any items to offer
-                              </p>
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => navigate('/create')}
-                              >
-                                Create a Listing First
-                              </Button>
+                        <div className="space-y-3">
+                          <Label>Offer Type</Label>
+                          <RadioGroup value={offerType} onValueChange={(v) => setOfferType(v as 'item' | 'cash' | 'both')}>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="item" id="item" />
+                              <Label htmlFor="item" className="font-normal cursor-pointer">Trade with Item</Label>
                             </div>
-                          ) : (
-                            <Select value={selectedItemId} onValueChange={setSelectedItemId}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Choose from your items" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {userItems.map((item) => (
-                                  <SelectItem key={item.id} value={item.id}>
-                                    {item.title} (₹{item.estimated_value || item.price})
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          )}
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="cash" id="cash" />
+                              <Label htmlFor="cash" className="font-normal cursor-pointer">Cash Only</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="both" id="both" />
+                              <Label htmlFor="both" className="font-normal cursor-pointer">Item + Cash</Label>
+                            </div>
+                          </RadioGroup>
                         </div>
+
+                        {(offerType === 'item' || offerType === 'both') && (
+                          <div className="space-y-2">
+                            <Label>Select Item to Offer</Label>
+                            {userItems.length === 0 ? (
+                              <div className="p-4 text-center border rounded-lg bg-muted/50">
+                                <p className="text-sm text-muted-foreground mb-2">
+                                  You don't have any items to offer
+                                </p>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => navigate('/create')}
+                                >
+                                  Create a Listing First
+                                </Button>
+                              </div>
+                            ) : (
+                              <Select value={selectedItemId} onValueChange={setSelectedItemId}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Choose from your items" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {userItems.map((item) => (
+                                    <SelectItem key={item.id} value={item.id}>
+                                      {item.title} (₹{item.estimated_value || item.price})
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+                        )}
+
+                        {(offerType === 'cash' || offerType === 'both') && (
+                          <div className="space-y-2">
+                            <Label>Cash Amount (₹)</Label>
+                            <div className="relative">
+                              <IndianRupee className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                              <Input
+                                type="number"
+                                placeholder="Enter amount"
+                                value={cashAmount}
+                                onChange={(e) => setCashAmount(e.target.value)}
+                                className="pl-9"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                        )}
+
                         <div className="space-y-2">
                           <Label>Message (Optional)</Label>
                           <Textarea
@@ -328,7 +391,7 @@ const AuctionDetail = () => {
                         </div>
                         <Button 
                           onClick={handlePlaceOffer} 
-                          disabled={!selectedItemId || submitting}
+                          disabled={submitting}
                           className="w-full"
                         >
                           {submitting ? 'Placing Offer...' : 'Submit Offer'}
@@ -358,24 +421,42 @@ const AuctionDetail = () => {
                     <Card key={offer.id}>
                       <CardContent className="p-4">
                         <div className="flex gap-4">
-                          {offer.items.photo_url ? (
+                          {offer.items?.photo_url ? (
                             <img
                               src={offer.items.photo_url}
                               alt={offer.items.title}
                               className="w-20 h-20 object-cover rounded"
                             />
-                          ) : (
+                          ) : offer.items ? (
                             <div className="w-20 h-20 bg-muted rounded flex items-center justify-center">
                               <Package className="w-8 h-8 text-muted-foreground" />
+                            </div>
+                          ) : (
+                            <div className="w-20 h-20 bg-primary/10 rounded flex items-center justify-center">
+                              <IndianRupee className="w-8 h-8 text-primary" />
                             </div>
                           )}
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
-                              <h4 className="font-semibold">{offer.items.title}</h4>
-                                <p className="text-sm text-muted-foreground">
-                                  Est. ₹{offer.items.estimated_value || offer.items.price}
-                                </p>
+                                {offer.items && (
+                                  <>
+                                    <h4 className="font-semibold">{offer.items.title}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      Est. ₹{offer.items.estimated_value || offer.items.price}
+                                    </p>
+                                  </>
+                                )}
+                                {offer.cash_amount > 0 && (
+                                  <div className="flex items-center gap-1 text-primary font-semibold">
+                                    <IndianRupee className="w-4 h-4" />
+                                    <span>{offer.cash_amount.toLocaleString('en-IN')}</span>
+                                    {offer.items && <span className="text-xs text-muted-foreground ml-1">(+ item)</span>}
+                                  </div>
+                                )}
+                                {!offer.items && offer.cash_amount > 0 && (
+                                  <p className="text-xs text-muted-foreground">Cash offer only</p>
+                                )}
                               </div>
                               <Badge variant={
                                 offer.status === 'accepted' ? 'default' :
