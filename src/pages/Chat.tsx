@@ -10,6 +10,7 @@ import { toast } from 'sonner';
 import { ArrowLeft, Send } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { messageSchema, getZodErrorMessage } from '@/lib/validations';
+import { formatDatabaseError } from '@/lib/errorHandler';
 
 interface Message {
   id: string;
@@ -153,9 +154,8 @@ const Chat = () => {
 
       setNewMessage('');
       fetchMessages();
-    } catch (error) {
-      console.error('Error sending message:', error);
-      toast.error('Failed to send message');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to send message'));
     } finally {
       setSending(false);
     }

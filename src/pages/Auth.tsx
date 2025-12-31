@@ -8,8 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { authLoginSchema, authSignupSchema, getZodErrorMessage } from '@/lib/validations';
-import { z } from 'zod';
-
+import { formatDatabaseError } from '@/lib/errorHandler';
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
@@ -68,8 +67,8 @@ const Auth = () => {
         toast.success('Account created! Welcome to SwapIt');
         navigate('/');
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Authentication failed');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Authentication failed'));
     } finally {
       setLoading(false);
     }

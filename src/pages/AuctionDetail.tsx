@@ -16,6 +16,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Clock, MapPin, Package, User, IndianRupee } from 'lucide-react';
 import { toast } from 'sonner';
 import { offerSchema, getZodErrorMessage } from '@/lib/validations';
+import { formatDatabaseError } from '@/lib/errorHandler';
 
 interface AuctionItem {
   id: string;
@@ -201,8 +202,8 @@ const AuctionDetail = () => {
       setOfferType('item');
       setOfferMessage('');
       fetchAuctionDetails();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to place offer');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to place offer'));
     } finally {
       setSubmitting(false);
     }

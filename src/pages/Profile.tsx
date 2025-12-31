@@ -12,6 +12,7 @@ import { Loader2, Upload } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import CarbonTracker from '@/components/CarbonTracker';
 import { profileSchema, getZodErrorMessage } from '@/lib/validations';
+import { formatDatabaseError } from '@/lib/errorHandler';
 
 export default function Profile() {
   const { user } = useAuth();
@@ -122,9 +123,8 @@ export default function Profile() {
 
       if (error) throw error;
       toast.success('Profile updated successfully');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      toast.error('Failed to update profile');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to update profile'));
     } finally {
       setLoading(false);
     }

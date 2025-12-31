@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Upload, X } from 'lucide-react';
 import { listingSchema, getZodErrorMessage } from '@/lib/validations';
+import { formatDatabaseError } from '@/lib/errorHandler';
 
 const CreateListing = () => {
   const [title, setTitle] = useState('');
@@ -113,8 +114,8 @@ const CreateListing = () => {
 
       toast.success('Item listed successfully!');
       navigate('/my-items');
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to create listing');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to create listing'));
     } finally {
       setLoading(false);
     }
