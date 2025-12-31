@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { Pencil, Trash2, MapPin } from 'lucide-react';
 import { ValueEstimate } from '@/components/ValueEstimate';
+import { formatDatabaseError } from '@/lib/errorHandler';
 
 interface Item {
   id: string;
@@ -67,8 +68,8 @@ const MyItems = () => {
       if (error) throw error;
       toast.success('Item deleted');
       fetchMyItems();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to delete item');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to delete item'));
     }
   };
 
@@ -84,8 +85,8 @@ const MyItems = () => {
       if (error) throw error;
       toast.success(`Item ${newStatus === 'active' ? 'activated' : 'deactivated'}`);
       fetchMyItems();
-    } catch (error: any) {
-      toast.error(error.message || 'Failed to update item');
+    } catch (error: unknown) {
+      toast.error(formatDatabaseError(error, 'Failed to update item'));
     }
   };
 
