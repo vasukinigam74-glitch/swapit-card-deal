@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSwapCredits } from '@/hooks/useSwapCredits';
 import Navigation from '@/components/Navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
-import { Pencil, Trash2, MapPin } from 'lucide-react';
+import { Pencil, Trash2, MapPin, Coins, TrendingUp, Gift, Info } from 'lucide-react';
 import { ValueEstimate } from '@/components/ValueEstimate';
 import { formatDatabaseError } from '@/lib/errorHandler';
 
@@ -28,6 +29,7 @@ const MyItems = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
+  const { credits, loading: creditsLoading } = useSwapCredits();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -90,6 +92,8 @@ const MyItems = () => {
     }
   };
 
+  const activeItems = items.filter(item => item.status === 'active').length;
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -105,17 +109,67 @@ const MyItems = () => {
     <div className="min-h-screen bg-background pb-24 md:pb-4 pt-20 md:pt-24">
       <Navigation />
       <div className="container max-w-4xl mx-auto px-4">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold">My Items</h1>
           <Button onClick={() => navigate('/create')}>
             Create Listing
           </Button>
         </div>
 
+        {/* Swap Credits Card */}
+        <Card className="mb-6 border-primary/30 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent overflow-hidden">
+          <CardContent className="p-0">
+            <div className="flex flex-col sm:flex-row">
+              {/* Credits Display */}
+              <div className="flex-1 p-5 border-b sm:border-b-0 sm:border-r border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-primary/20">
+                    <Coins className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground font-medium">Swap Credits</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {creditsLoading ? '...' : credits}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Stats */}
+              <div className="flex-1 p-5 border-b sm:border-b-0 sm:border-r border-border/50">
+                <div className="flex items-center gap-3">
+                  <div className="p-3 rounded-full bg-secondary">
+                    <TrendingUp className="w-6 h-6 text-secondary-foreground" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground font-medium">Active Listings</p>
+                    <p className="text-3xl font-bold">{activeItems}</p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* How to earn */}
+              <div className="flex-1 p-5 bg-muted/30">
+                <div className="flex items-start gap-2">
+                  <Info className="w-4 h-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="text-sm text-muted-foreground">
+                    <p className="font-medium mb-1">How to earn credits:</p>
+                    <p>Complete a swap by accepting or having your offer accepted. Both parties earn +1 credit!</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
         {items.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-muted-foreground mb-4">You haven't listed any items yet</p>
+              <Gift className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground mb-2">You haven't listed any items yet</p>
+              <p className="text-sm text-muted-foreground mb-4">
+                List items to earn Swap Credits when you complete trades!
+              </p>
               <Button onClick={() => navigate('/create')}>
                 Create Your First Listing
               </Button>
