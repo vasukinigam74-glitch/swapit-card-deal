@@ -1,13 +1,16 @@
 import { Link, useLocation } from 'react-router-dom';
-import { Home, PlusCircle, Heart, Package, LogOut, User, MessageSquare, Gavel } from 'lucide-react';
+import { Home, PlusCircle, Heart, Package, LogOut, User, MessageSquare, Gavel, Coins } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSwapCredits } from '@/hooks/useSwapCredits';
 import { Button } from './ui/button';
+import { Badge } from './ui/badge';
 import { toast } from 'sonner';
 
 const Navigation = () => {
   const location = useLocation();
   const { user } = useAuth();
+  const { credits, loading: creditsLoading } = useSwapCredits();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -49,20 +52,35 @@ const Navigation = () => {
               ))}
             </div>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout} className="hidden md:flex">
-            <LogOut className="w-4 h-4 mr-2" />
-            Logout
-          </Button>
+          <div className="hidden md:flex items-center gap-4">
+            <Badge variant="outline" className="flex items-center gap-1.5 px-3 py-1.5">
+              <Coins className="w-4 h-4 text-primary" />
+              <span className="font-semibold">{creditsLoading ? '...' : credits}</span>
+              <span className="text-muted-foreground text-xs">credits</span>
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
       
       {/* Mobile bottom nav */}
       <div className="flex md:hidden items-center justify-around pb-safe">
-        {navItems.map((item) => (
+        {/* Credits badge for mobile */}
+        <div className="flex flex-col items-center gap-1 py-2 px-2">
+          <div className="flex items-center gap-1 bg-primary/10 rounded-full px-2 py-0.5">
+            <Coins className="w-4 h-4 text-primary" />
+            <span className="text-xs font-semibold text-primary">{creditsLoading ? '...' : credits}</span>
+          </div>
+          <span className="text-xs text-muted-foreground">Credits</span>
+        </div>
+        {navItems.slice(0, 4).map((item) => (
           <Link
             key={item.path}
             to={item.path}
-            className={`flex flex-col items-center gap-1 py-2 px-4 transition-colors ${
+            className={`flex flex-col items-center gap-1 py-2 px-2 transition-colors ${
               location.pathname === item.path
                 ? 'text-primary'
                 : 'text-muted-foreground'
@@ -72,13 +90,17 @@ const Navigation = () => {
             <span className="text-xs">{item.label}</span>
           </Link>
         ))}
-        <button
-          onClick={handleLogout}
-          className="flex flex-col items-center gap-1 py-2 px-4 text-muted-foreground"
+        <Link
+          to="/profile"
+          className={`flex flex-col items-center gap-1 py-2 px-2 transition-colors ${
+            location.pathname === '/profile'
+              ? 'text-primary'
+              : 'text-muted-foreground'
+          }`}
         >
-          <LogOut className="w-5 h-5" />
-          <span className="text-xs">Logout</span>
-        </button>
+          <User className="w-5 h-5" />
+          <span className="text-xs">Profile</span>
+        </Link>
       </div>
     </nav>
   );

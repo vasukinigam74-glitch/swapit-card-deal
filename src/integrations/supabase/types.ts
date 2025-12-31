@@ -266,6 +266,7 @@ export type Database = {
           full_name: string | null
           id: string
           mobile_number: string | null
+          swap_credits: number
         }
         Insert: {
           avatar_url?: string | null
@@ -276,6 +277,7 @@ export type Database = {
           full_name?: string | null
           id: string
           mobile_number?: string | null
+          swap_credits?: number
         }
         Update: {
           avatar_url?: string | null
@@ -286,6 +288,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           mobile_number?: string | null
+          swap_credits?: number
         }
         Relationships: []
       }
@@ -294,9 +297,21 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_swap_credit: {
+        Args: { _amount?: number; _user_id: string }
+        Returns: undefined
+      }
       calculate_carbon_savings: {
         Args: { item_category: string }
         Returns: number
+      }
+      deduct_swap_credit: {
+        Args: { _amount?: number; _user_id: string }
+        Returns: boolean
+      }
+      has_swap_credits: {
+        Args: { _required?: number; _user_id: string }
+        Returns: boolean
       }
       seed_auction_items: { Args: never; Returns: undefined }
       seed_mock_products: { Args: never; Returns: undefined }

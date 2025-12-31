@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useSwapCredits } from '@/hooks/useSwapCredits';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Upload, Coins, Info } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import CarbonTracker from '@/components/CarbonTracker';
 import { profileSchema, getZodErrorMessage } from '@/lib/validations';
@@ -16,6 +18,7 @@ import { formatDatabaseError } from '@/lib/errorHandler';
 
 export default function Profile() {
   const { user } = useAuth();
+  const { credits, loading: creditsLoading } = useSwapCredits();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -137,6 +140,32 @@ export default function Profile() {
       <Navigation />
       <main className="container max-w-2xl mx-auto px-4 py-8 pb-24">
         <h1 className="text-3xl font-bold mb-8">Edit Profile</h1>
+
+        {/* Swap Credits Card */}
+        <Card className="mb-6 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Coins className="w-5 h-5 text-primary" />
+              Swap Credits
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-3xl font-bold text-primary">
+                  {creditsLoading ? '...' : credits}
+                </p>
+                <p className="text-sm text-muted-foreground">Available credits</p>
+              </div>
+              <div className="text-right text-sm text-muted-foreground max-w-[200px]">
+                <div className="flex items-start gap-1">
+                  <Info className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                  <span>Earn credits by completing swaps. Spend 1 credit to claim an item.</span>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <div className="mb-6">
           <CarbonTracker />
